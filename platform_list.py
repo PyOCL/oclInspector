@@ -6,7 +6,7 @@ class PlatformList():
 
     def enter(self):
         utils.cls()
-        print("=" * 80)
+        print("=" * 85)
 
     def list(self):
         idx = 1
@@ -16,7 +16,7 @@ class PlatformList():
             print("            PROFILE: %10s" % (platform.profile))
             print("            VENDOR : %10s" % (platform.vendor))
             idx = idx + 1
-            print("-" * 80)
+            print("-" * 85)
         return idx - 1
 
     def choose(self, index):

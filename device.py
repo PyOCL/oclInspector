@@ -5,7 +5,6 @@ from pyopencl import device_info as di
 
 class Device():
     # TODO: finish the list from PIPE_MAX_ACTIVE_RESERVATIONS
-    # TODO: implement the interpreter of info array
     # TODO: try to implement sub-devices part
     MEMORY_INFO = [{"key": di.GLOBAL_MEM_CACHELINE_SIZE, "name": "Global memory cache line size",
                     "type": "byte_int"},
@@ -16,7 +15,7 @@ class Device():
                    {"key": di.GLOBAL_MEM_SIZE, "name": "Global memory size", "type": "byte_int"},
                    {"key": di.GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE,
                     "available": {"type": "version", "value": 2},
-                    "name": "Maximum preferred total size of global variables", "type": "byte_int"},
+                    "name": "Max preferred size of global variables", "type": "byte_int"},
                    {"key": di.LOCAL_MEM_SIZE, "name": "Local memory size", "type": "byte_int"},
                    {"key": di.LOCAL_MEM_TYPE, "name": "Local memory type",
                     "type": "device_local_mem_type"},
@@ -105,19 +104,27 @@ class Device():
                    "type": "int"}
                  ]
 
-    def __init__(self, device, sub=None):
+    # TODO: implement the interpreter of info array
+    VALUE_FORMATTER = {"byte_int": utils.format_byte,
+                       "int": str,
+                       "int3": str,
+                       "device_mem_cache_type": lambda v: cl.device_mem_cache_type.to_string(v),
+                       "device_local_mem_type": lambda v: cl.device_local_mem_type.to_string(v)
+                      }
+
+    def __init__(self, device, item_list=None):
         self.__device = device
-        self.__sub = sub
+        self.__item_list = item_list
 
     def enter(self):
         utils.cls()
         utils.print_info([["", "Device name", self.__device.name],
                           ["", "Device type", cl.device_type.to_string(self.__device.type)],
                           ["", "Device version", self.__device.version]])
-        print("=" * 80)
+        print("=" * 85)
 
     def list(self):
-        if self.__sub is None:
+        if self.__item_list is None:
             group = ["Memory", "Device", "Data type", "Image"]
             utils.print_info([[1, "Memory", "Memory info({0})".format(len(Device.MEMORY_INFO))],
                               [2,
@@ -129,14 +136,30 @@ class Device():
                               [4, "Image", "Image info({0})".format(len(Device.IMAGE_INFO))]])
             return 4
         else:
+            infos = []
+            for item in self.__item_list:
+                infos.append(self.evaluate_result(item))
+            utils.print_info(infos)
             return 0
 
     def choose(self, index):
-        # TODO: implement choose sub group of device
-        return None
+        if self.__item_list is None:
+            # TODO: use correct info group according to index
+            return Device(self.__device, Device.MEMORY_INFO)
+        else:
+            return None
 
     def prompt(self):
-        if self.__sub is None:
+        if self.__item_list is None:
             return "Please choose which information group you want to see"
         else:
             return None
+
+    def evaluate_result(self, item):
+        if "available" in item:
+            return ["", item["name"], "Available is not implemented"]
+
+        if item["type"] not in Device.VALUE_FORMATTER:
+            return ["", item["name"], "Type, {0}, is not supported".format(item["type"])]
+        val = self.__device.get_info(item["key"])
+        return ["", item["name"], Device.VALUE_FORMATTER[item["type"]](val)]

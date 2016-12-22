@@ -24,7 +24,7 @@ class Platform():
                              ["", "Device type", cl.device_type.to_string(device.type)],
                              ["", "Device version", device.version]])
             idx = idx + 1
-            print("-" * 80)
+            print("-" * 85)
         return idx - 1
 
     def choose(self, index):
