@@ -1,4 +1,5 @@
 import pyopencl as cl
+import re
 import utils
 
 from pyopencl import device_info as di
@@ -86,11 +87,11 @@ class Device():
                       {"key": di.NATIVE_VECTOR_WIDTH_SHORT, "name": "ISA vector width for short",
                        "type": "int"}
                      ]
-    IMAGE_INFO = [{"key": di.IMAGE2D_MAX_HEIGHT, "name": "2D image max height", "type": "pixel"},
-                  {"key": di.IMAGE2D_MAX_WIDTH, "name": "2D image max width", "type": "pixel"},
-                  {"key": di.IMAGE3D_MAX_DEPTH, "name": "3D image max depth", "type": "pixel"},
-                  {"key": di.IMAGE3D_MAX_HEIGHT, "name": "3D image max height", "type": "pixel"},
-                  {"key": di.IMAGE3D_MAX_WIDTH, "name": "3D image max width", "type": "pixel"},
+    IMAGE_INFO = [{"key": di.IMAGE2D_MAX_HEIGHT, "name": "2D image max height", "type": "int"},
+                  {"key": di.IMAGE2D_MAX_WIDTH, "name": "2D image max width", "type": "int"},
+                  {"key": di.IMAGE3D_MAX_DEPTH, "name": "3D image max depth", "type": "int"},
+                  {"key": di.IMAGE3D_MAX_HEIGHT, "name": "3D image max height", "type": "int"},
+                  {"key": di.IMAGE3D_MAX_WIDTH, "name": "3D image max width", "type": "int"},
                   {"key": di.IMAGE_MAX_ARRAY_SIZE, "available": {"type": "version", "value": 1.2},
                    "name": "Max images in a 1D or 2D image array", "type": "int"},
                   {"key": di.IMAGE_MAX_BUFFER_SIZE, "available": {"type": "version", "value": 1.2},
@@ -105,12 +106,21 @@ class Device():
                  ]
 
     # TODO: implement the interpreter of info array
-    VALUE_FORMATTER = {"byte_int": utils.format_byte,
+    VALUE_FORMATTER = {"bool": lambda v: "True" if v else "False",
+                       "byte_int": utils.format_byte,
+                       "device_exec_capabilities": utils.format_ocl_device_exec_capabilities,
+                       "device_fp_config": utils.format_ocl_device_fp_config,
+                       "device_mem_cache_type": lambda v: cl.device_mem_cache_type.to_string(v),
+                       "device_local_mem_type": lambda v: cl.device_local_mem_type.to_string(v),
                        "int": str,
                        "int3": str,
-                       "device_mem_cache_type": lambda v: cl.device_mem_cache_type.to_string(v),
-                       "device_local_mem_type": lambda v: cl.device_local_mem_type.to_string(v)
+                       "mhz": utils.format_mhz,
+                       "semicoloned_string": lambda v: v.split(";"),
+                       "spaced_string": lambda v: v.split(),
+                       "string": str
                       }
+
+    ITEM_LIST = [MEMORY_INFO, DEVICE_INFO, DATA_TYPE_INFO, IMAGE_INFO]
 
     def __init__(self, device, item_list=None):
         self.__device = device
@@ -125,7 +135,6 @@ class Device():
 
     def list(self):
         if self.__item_list is None:
-            group = ["Memory", "Device", "Data type", "Image"]
             utils.print_info([[1, "Memory", "Memory info({0})".format(len(Device.MEMORY_INFO))],
                               [2,
                                "Device info",
@@ -144,8 +153,7 @@ class Device():
 
     def choose(self, index):
         if self.__item_list is None:
-            # TODO: use correct info group according to index
-            return Device(self.__device, Device.MEMORY_INFO)
+            return Device(self.__device, Device.ITEM_LIST[index])
         else:
             return None
 
@@ -155,11 +163,24 @@ class Device():
         else:
             return None
 
+    def evaluate_available(self, available):
+        if available["type"] == "version":
+            m = re.search("^[A-Za-z]+\s([\d.]+)", self.__device.version)
+            return float(m.group(1)) >= available["value"] if m else False
+        elif available["type"] == "extensions":
+            return available["value"] in self.__device.extensions.split()
+        else:
+            return False
+
     def evaluate_result(self, item):
-        if "available" in item:
-            return ["", item["name"], "Available is not implemented"]
+        if "available" in item and self.evaluate_available(item["available"]) is False:
+            return ["", item["name"], "Not available ({0})".format(item["available"]["type"])]
 
         if item["type"] not in Device.VALUE_FORMATTER:
             return ["", item["name"], "Type, {0}, is not supported".format(item["type"])]
-        val = self.__device.get_info(item["key"])
+        try:
+            val = self.__device.get_info(item["key"])
+        except Exception as e:
+            val = "ERROR TO READ VALUE" 
+
         return ["", item["name"], Device.VALUE_FORMATTER[item["type"]](val)]

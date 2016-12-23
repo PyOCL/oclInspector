@@ -11,9 +11,9 @@ def cliloop(obj):
         obj.enter()
         max_index = obj.list()
         if max_index == -1:
-            user_input = input("(0 for exit)")
+            user_input = input("(0 for back)")
         else:
-            user_input = input("{0} (1 ~ {1}, 0 for exit): ".format(obj.prompt(), max_index))
+            user_input = input("{0} (1 ~ {1}, 0 for back): ".format(obj.prompt(), max_index))
 
         if user_input == "0":
             if len(stack) == 0:
