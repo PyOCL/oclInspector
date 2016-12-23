@@ -124,6 +124,7 @@ None (1 ~ 0, 0 for back, -1 for exit):
 
 - There are a few fields shown `Not available (version)` or `Not available (extensions)` which means this fields is not available on this device.
 - For some devices, it cannot read OpenCL device info correctly that may be a driver issue. If this happens, the field shows `ERROR TO READ VALUE`
+- If our pyopencl is too old to list properties, a field shows `pyopencl too old to have this.`
 
 ## Missing fields (TODO list)
 We may find there are some missing fields at [pyopencl API](https://documen.tician.de/pyopencl/runtime_const.html#device_info):
