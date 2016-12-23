@@ -5,8 +5,7 @@ import utils
 from pyopencl import device_info as di
 
 class Device():
-    # TODO: finish the list from PIPE_MAX_ACTIVE_RESERVATIONS
-    # TODO: try to implement sub-devices part
+    # TODO: try to implement sub-devices part, REFERENCE_COUNT is one of sub-devices.
     MEMORY_INFO = [{"key": di.GLOBAL_MEM_CACHELINE_SIZE, "name": "Global memory cache line size",
                     "type": "byte_int"},
                    {"key": di.GLOBAL_MEM_CACHE_SIZE, "name": "Global memory cache size",
@@ -39,8 +38,15 @@ class Device():
                     "type": "int3"},
                    {"key": di.MEM_BASE_ADDR_ALIGN, "name": "base address align", "type": "int"},
                    {"key": di.LOCAL_MEM_SIZE, "name": "Local memory size", "type": "byte_int"},
-                   {"key": di.LOCAL_MEM_SIZE, "name": "Local memory size", "type": "byte_int"},
-                   {"key": di.LOCAL_MEM_SIZE, "name": "Local memory size", "type": "byte_int"}
+                   {"key": di.QUEUE_ON_DEVICE_MAX_SIZE, "name": "The max size of the device queue",
+                    "type": "byte_int", "available": {"type": "version", "value": 2}},
+                   {"key": di.QUEUE_ON_DEVICE_PREFERRED_SIZE, "name": "The size of the device queue",
+                    "type": "byte_int", "available": {"type": "version", "value": 2}},
+                   {"key": di.QUEUE_ON_DEVICE_PROPERTIES, "name": "Device command-queue properties",
+                    "type": "command_queue_properties",
+                    "available": {"type": "version", "value": 2}},
+                   {"key": di.QUEUE_ON_HOST_PROPERTIES, "name": "Host command-queue properties",
+                    "type": "command_queue_properties"},
                 ]
     DEVICE_INFO = [{"key": di.ADDRESS_BITS, "name": "Address size", "type": "int"},
                    {"key": di.AVAILABLE, "name": "Available", "type": "bool"},
@@ -64,7 +70,27 @@ class Device():
                    {"key": di.LINKER_AVAILABLE, "name": "Linker available", "type": "bool"},
                    {"key": di.MAX_SAMPLERS, "name": "Max sampler used in a kernel", "type": "int"},
                    {"key": di.NAME, "name": "Device name", "type": "string"},
-                   {"key": di.OPENCL_C_VERSION, "name": "OpenCL C version", "type": "string"}
+                   {"key": di.OPENCL_C_VERSION, "name": "OpenCL C version", "type": "string"},
+                   {"key": di.PIPE_MAX_ACTIVE_RESERVATIONS, "name": "The max reservations",
+                    "type": "int", "available": {"type": "version", "value": 2}},
+                   {"key": di.PIPE_MAX_PACKET_SIZE, "name": "The max size of pipe packet",
+                    "type": "byte_int", "available": {"type": "version", "value": 2}},
+                   {"key": di.PREFERRED_GLOBAL_ATOMIC_ALIGNMENT, "name": "Global atomic align",
+                    "type": "int", "available": {"type": "version", "value": 2}},
+                   {"key": di.PREFERRED_INTEROP_USER_SYNC, "name": "Memory share sync by User",
+                    "type": "bool", "available": {"type": "version", "value": 1.2}},
+                   {"key": di.PREFERRED_LOCAL_ATOMIC_ALIGNMENT, "name": "Local atomic align",
+                    "type": "int", "available": {"type": "version", "value": 2}},
+                   {"key": di.PREFERRED_PLATFORM_ATOMIC_ALIGNMENT, "name": "Platform atomic align",
+                    "type": "int", "available": {"type": "version", "value": 2}},
+                   {"key": di.PRINTF_BUFFER_SIZE, "name": "Printf buffer size",
+                    "type": "byte_int", "available": {"type": "version", "value": 1.2}},
+                   {"key": di.PROFILING_TIMER_RESOLUTION, "name": "Profiling timer resolution",
+                    "type": "timer_resolution"},
+                   {"key": di.TYPE, "name": "Type of device", "type": "device_type"},
+                   {"key": di.VENDOR, "name": "Vendor name", "type": "string"},
+                   {"key": di.VENDOR_ID, "name": "Vendor ID", "type": "int"},
+                   {"key": di.VERSION, "name": "Version", "type": "string"},
                   ]
     DATA_TYPE_INFO = [{"key": di.DOUBLE_FP_CONFIG, "name": "Double supported",
                        "available": {"type": "extensions", "value": "cl_khr_fp64"},
@@ -85,7 +111,27 @@ class Device():
                       {"key": di.NATIVE_VECTOR_WIDTH_LONG, "name": "ISA vector width for long",
                        "type": "int"},
                       {"key": di.NATIVE_VECTOR_WIDTH_SHORT, "name": "ISA vector width for short",
-                       "type": "int"}
+                       "type": "int"},
+                      {"key": di.PREFERRED_VECTOR_WIDTH_CHAR,
+                       "name": "Preferred native vector width for char", "type": "int"},
+                      {"key": di.PREFERRED_VECTOR_WIDTH_DOUBLE,
+                       "name": "Preferred native vector width for double", "type": "int"},
+                      {"key": di.PREFERRED_VECTOR_WIDTH_FLOAT,
+                       "name": "Preferred native vector width for float", "type": "int"},
+                      {"key": di.PREFERRED_VECTOR_WIDTH_HALF,
+                       "name": "Preferred native vector width for half", "type": "int",
+                       "available": {"type": "version", "value": 1.1}},
+                      {"key": di.PREFERRED_VECTOR_WIDTH_INT,
+                       "name": "Preferred native vector width for int", "type": "int"},
+                      {"key": di.PREFERRED_VECTOR_WIDTH_LONG,
+                       "name": "Preferred native vector width for long", "type": "int"},
+                      {"key": di.PREFERRED_VECTOR_WIDTH_SHORT,
+                       "name": "Preferred native vector width for short", "type": "int"},
+                      {"key": di.SINGLE_FP_CONFIG, "name": "Single supported",
+                       "type": "device_fp_config"},
+                      {"key": di.SVM_CAPABILITIES, "name": "SVM capabilities",
+                       "type": "device_svm_capabilities"},
+
                      ]
     IMAGE_INFO = [{"key": di.IMAGE2D_MAX_HEIGHT, "name": "2D image max height", "type": "int"},
                   {"key": di.IMAGE2D_MAX_WIDTH, "name": "2D image max width", "type": "int"},
@@ -105,19 +151,22 @@ class Device():
                    "type": "int"}
                  ]
 
-    # TODO: implement the interpreter of info array
     VALUE_FORMATTER = {"bool": lambda v: "True" if v else "False",
                        "byte_int": utils.format_byte,
+                       "command_queue_properties": utils.format_ocl_command_queue_properties,
                        "device_exec_capabilities": utils.format_ocl_device_exec_capabilities,
                        "device_fp_config": utils.format_ocl_device_fp_config,
                        "device_mem_cache_type": lambda v: cl.device_mem_cache_type.to_string(v),
                        "device_local_mem_type": lambda v: cl.device_local_mem_type.to_string(v),
+                       "device_svm_capabilities": utils.format_ocl_device_svm_capabilities,
+                       "device_type": lambda v: cl.device_type.to_string(v),
                        "int": str,
                        "int3": str,
                        "mhz": utils.format_mhz,
                        "semicoloned_string": lambda v: v.split(";"),
                        "spaced_string": lambda v: v.split(),
-                       "string": str
+                       "string": str,
+                       "timer_resolution": utils.format_timer_resolution
                       }
 
     ITEM_LIST = [MEMORY_INFO, DEVICE_INFO, DATA_TYPE_INFO, IMAGE_INFO]
@@ -130,7 +179,8 @@ class Device():
         utils.cls()
         utils.print_info([["", "Device name", self.__device.name],
                           ["", "Device type", cl.device_type.to_string(self.__device.type)],
-                          ["", "Device version", self.__device.version]])
+                          ["", "Device version", self.__device.version],
+                          ["", "Device Profile", self.__device.profile]])
         print("=" * 85)
 
     def list(self):
@@ -178,9 +228,12 @@ class Device():
 
         if item["type"] not in Device.VALUE_FORMATTER:
             return ["", item["name"], "Type, {0}, is not supported".format(item["type"])]
+
+        val_err = False
         try:
             val = self.__device.get_info(item["key"])
         except Exception as e:
-            val = "ERROR TO READ VALUE" 
+            val = "ERROR TO READ VALUE"
+            val_err = True
 
-        return ["", item["name"], Device.VALUE_FORMATTER[item["type"]](val)]
+        return ["", item["name"], val if val_err else Device.VALUE_FORMATTER[item["type"]](val)]

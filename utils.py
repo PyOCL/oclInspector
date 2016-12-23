@@ -66,3 +66,30 @@ def format_ocl_device_exec_capabilities(val):
         if val & item == item:
             ret.append(ec.to_string(item))
     return ret
+
+def format_ocl_command_queue_properties(val):
+    enum = cl.command_queue_properties
+    items = [enum.ON_DEVICE,
+             enum.ON_DEVICE_DEFAULT,
+             enum.OUT_OF_ORDER_EXEC_MODE_ENABLE,
+             enum.PROFILING_ENABLE]
+    ret = []
+    for item in items:
+        if val & item == item:
+            ret.append(enum.to_string(item))
+    return ret
+
+def format_ocl_device_svm_capabilities(val):
+    enum = cl.device_svm_capabilities
+    items = [enum.ATOMICS,
+             enum.COARSE_GRAIN_BUFFER,
+             enum.FINE_GRAIN_BUFFER,
+             enum.FINE_GRAIN_SYSTEM]
+    ret = []
+    for item in items:
+        if val & item == item:
+            ret.append(enum.to_string(item))
+    return ret
+
+def format_timer_resolution(val):
+    return "{0} nanoseconds".format(val)
