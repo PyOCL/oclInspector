@@ -91,6 +91,14 @@ class Device():
                    {"key": "VENDOR", "name": "Vendor name", "type": "string"},
                    {"key": "VENDOR_ID", "name": "Vendor ID", "type": "int"},
                    {"key": "VERSION", "name": "Version", "type": "string"},
+                   {"key": "IL_VERSION", "name": "Intermediate languages version",
+                    "type": "string", "available": {"type": "version", "value": 2.1}},
+                   {"key": "MAX_NUM_SUB_GROUPS", "name": "Max sub-groups in a work-group",
+                    "type": "int", "available": {"type": "version", "value": 2.1}},
+                   {"key": "SPIR_VERSIONS", "name": "SPIR versions", "type": "spaced_string"},
+                   {"key": "SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS",
+                    "name": "Supports independent forward progress",
+                    "type": "bool", "available": {"type": "version", "value": 2.1}},
                   ]
     DATA_TYPE_INFO = [{"key": "DOUBLE_FP_CONFIG", "name": "Double supported",
                        "available": {"type": "extensions", "value": "cl_khr_fp64"},
@@ -237,7 +245,7 @@ class Device():
                 val = "ERROR TO READ VALUE"
                 val_err = True
         else:
-            val = "pyopencl doesn't support this."
+            val = "pyopencl too old to have this."
             val_err = True
 
         return ["", item["name"], val if val_err else Device.VALUE_FORMATTER[item["type"]](val)]
