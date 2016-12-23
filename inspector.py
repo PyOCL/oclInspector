@@ -11,11 +11,14 @@ def cliloop(obj):
         obj.enter()
         max_index = obj.list()
         if max_index == -1:
-            user_input = input("(0 for back)")
+            user_input = input("(0 for back, -1 for exit)")
         else:
-            user_input = input("{0} (1 ~ {1}, 0 for back): ".format(obj.prompt(), max_index))
+            user_input = input("{0} (1 ~ {1}, 0 for back, -1 for exit): ".format(obj.prompt(),
+                                                                                 max_index))
 
-        if user_input == "0":
+        if user_input == "-1":
+            break
+        elif user_input == "0":
             if len(stack) == 0:
                 break
             else:
