@@ -171,8 +171,8 @@ class Device():
                        "int": str,
                        "int3": str,
                        "mhz": utils.format_mhz,
-                       "semicoloned_string": lambda v: v.split(";"),
-                       "spaced_string": lambda v: v.split(),
+                       "semicoloned_string": lambda v: v.split(";") if v else "",
+                       "spaced_string": lambda v: v.split() if v else "",
                        "string": str,
                        "timer_resolution": utils.format_timer_resolution
                       }
