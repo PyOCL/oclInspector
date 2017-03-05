@@ -99,6 +99,9 @@ class Device():
                    {"key": "SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS",
                     "name": "Supports independent forward progress",
                     "type": "bool", "available": {"type": "version", "value": 2.1}},
+                   {"key": "REGISTERS_PER_BLOCK_NV", "name": "Registers per Block of NV",
+                    "type": "int",
+                    "available": {"type": "extensions", "value": "cl_nv_device_attribute_query"}}
                   ]
     DATA_TYPE_INFO = [{"key": "DOUBLE_FP_CONFIG", "name": "Double supported",
                        "available": {"type": "extensions", "value": "cl_khr_fp64"},
