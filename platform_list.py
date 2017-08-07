@@ -1,6 +1,6 @@
 import pyopencl as cl
 import utils
-from platform import Platform
+from ocl_platform import Platform
 
 class PlatformList():
 
